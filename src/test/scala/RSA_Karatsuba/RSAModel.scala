@@ -5,7 +5,6 @@ import scala.sys.process._
 case class RSAParams(keySize: Int)
 
 class RSAModel(params: RSAParams) {
-  // Placeholder for public and private keys
   private var publicKey: (BigInt, BigInt) = _ // (n,e)
   private var privateKey: (BigInt, BigInt) = _ // (n,d)
   private var n: BigInt = _
@@ -15,8 +14,17 @@ class RSAModel(params: RSAParams) {
   private var d: BigInt = _
   private var phiN: BigInt = _
 
+  // Custom constructor that calls generatePublicKey and generatePrivateKey
+  def this(params: RSAParams, generateKeys: Boolean) = {
+    this(params)
+    if (generateKeys) {
+      generatePublicKey()
+      generatePrivateKey()
+    }
+  }
+
   // Generate public and private keys
-  def generatePublicKey(): Unit = {
+  private def generatePublicKey(): Unit = {
     p = getRandomPrimeNumber()
     q = getRandomPrimeNumber()
 
@@ -35,7 +43,7 @@ class RSAModel(params: RSAParams) {
     publicKey = (n, e)
   }
 
-  def generatePrivateKey(): Unit = {
+  private def generatePrivateKey(): Unit = {
     d = e.modInverse(phiN)
     privateKey = (n,d)
   }
