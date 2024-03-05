@@ -1,43 +1,82 @@
 package RSA_Karatsuba
 
+import scala.sys.process._
+
 case class RSAParams(keySize: Int)
 
-class RSAModel(p: RSAParams) {
-  // Placeholder for public and private keys
-  private var publicKey: BigInt = _
-  private var privateKey: BigInt = _
+class RSAModel(params: RSAParams) {
+  private var publicKey: (BigInt, BigInt) = _ // (n,e)
+  private var privateKey: (BigInt, BigInt) = _ // (n,d)
+  private var n: BigInt = _
+  private var p: BigInt = _
+  private var q: BigInt = _
+  private var e: BigInt = BigInt(2)
+  private var d: BigInt = _
+  private var phiN: BigInt = _
 
-  // Generate public and private keys
-  def generateKeys(): Unit = {
-    // Implement key generation logic here
-    // ...
-
-    // For testing purposes, generate random keys
-    val keyLimit = BigInt(2).pow(p.keySize)
-    publicKey = BigInt(p.keySize, scala.util.Random)
-    privateKey = BigInt(p.keySize, scala.util.Random)
+  // Custom constructor that calls generatePublicKey and generatePrivateKey
+  def this(params: RSAParams, generateKeys: Boolean) = {
+    this(params)
+    if (generateKeys) {
+      generatePublicKey()
+      generatePrivateKey()
+    }
   }
 
-  def getPublicKey: BigInt = publicKey
+  // Generate public and private keys
+  private def generatePublicKey(): Unit = {
+    p = getRandomPrimeNumber()
+    q = getRandomPrimeNumber()
 
-  def getPrivateKey: BigInt = privateKey
+    n = karatsubaMultiply(p, q)
+    phiN = karatsubaMultiply(p-1, q-1)
+
+    var foundE = false
+
+    while (e < phiN  && !foundE) {
+      // e must be co-prime to phi and smaller than phi.
+      if (gcd(e, phiN) == 1)
+        foundE = true
+      else
+        e += 1
+    }
+    publicKey = (n, e)
+  }
+
+  private def generatePrivateKey(): Unit = {
+    d = e.modInverse(phiN)
+    privateKey = (n,d)
+  }
+
+  private def gcd(a: BigInt, b: BigInt): BigInt = {
+    if (b == 0) a else gcd(b, a % b)
+  }
+
+  private def getRandomPrimeNumber(): BigInt = {
+    val bitLength = params.keySize / 2 // Adjust the desired bit length
+
+    // Generate a large random prime using OpenSSL
+    val primeCommand = s"openssl prime -generate -bits $bitLength"
+    val result = primeCommand.!!
+
+    // Parse the result to extract the generated prime
+    BigInt(result.trim)
+  }
+
+
+
+  def getPublicKey: (BigInt, BigInt) = publicKey
+
+  def getPrivateKey: (BigInt, BigInt) = privateKey
 
   // Encrypt a message using RSA
   def encrypt(message: BigInt): BigInt = {
-    // Implement RSA encryption logic here
-    // ...
-
-    // For testing purposes, just return the message
-    message
+    message.modPow(publicKey._2, publicKey._1)
   }
 
   // Decrypt a message using RSA
   def decrypt(ciphertext: BigInt): BigInt = {
-    // Implement RSA decryption logic here
-    // ...
-
-    // For testing purposes, just return the ciphertext
-    ciphertext
+    ciphertext.modPow(privateKey._2, privateKey._1)
   }
 
   // Perform multiplication using Karatsuba algorithm
