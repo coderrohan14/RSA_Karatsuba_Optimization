@@ -2,7 +2,7 @@ package RSA_Karatsuba
 
 import scala.sys.process._
 
-case class RSAParams(keySize: Int)
+
 
 class RSAModel(params: RSAParams) {
   private var publicKey: (BigInt, BigInt) = _ // (n,e)
@@ -51,6 +51,7 @@ class RSAModel(params: RSAParams) {
   private def gcd(a: BigInt, b: BigInt): BigInt = {
     if (b == 0) a else gcd(b, a % b)
   }
+
 
   private def getRandomPrimeNumber(): BigInt = {
     val bitLength = params.keySize / 2 // Adjust the desired bit length
