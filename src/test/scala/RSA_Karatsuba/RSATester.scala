@@ -13,14 +13,14 @@ class RSATester extends AnyFlatSpec with ChiselScalatestTester {
     val p = RSAParams(keySize = 32)
     test(new RSA(p)) { rsa =>
       // Provide input values (32-bit for simplicity)
-//      rsa.io.primeNum1.poke(37529.U)
-//      rsa.io.primeNum1.poke(37781.U)
-//      rsa.io.message.poke(1234.U)
-//      rsa.clock.step()
-//      rsa.generateKeys()
-//      rsa.clock.step()
-//      println(s"n: ${rsa.io.publicKeyN}, e: ${rsa.io.publicKeyE}, d: ${rsa.io.privateKeyD}\n")
-//      true
+      rsa.io.primeNum1.poke(36607.U)
+      rsa.io.primeNum1.poke(42569.U)
+      rsa.io.message.poke(3546098009L.U)
+      rsa.clock.step()
+      rsa.generateKeys()
+      rsa.clock.step()
+      println(s"n: ${rsa.io.publicKeyN}, e: ${rsa.io.publicKeyE}, d: ${rsa.io.privateKeyD}\n")
+      true
     }
   }
 

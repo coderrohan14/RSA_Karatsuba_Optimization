@@ -3,11 +3,11 @@ package RSA_Karatsuba
 import chisel3._
 import chisel3.util._
 
-import scala.util.Random
 
 case class RSAParams(keySize: Int)
 
-class RSA(val p: RSAParams) extends Module {
+
+class RSAIO(p: RSAParams) extends Module{
   val io = IO(new Bundle {
     // Input ports
     val primeNum1 = Input(UInt((p.keySize/2).W))
@@ -22,49 +22,20 @@ class RSA(val p: RSAParams) extends Module {
     val privateKeyD = Output(UInt(p.keySize.W))
   })
 
-  // Function to perform Karatsuba multiplication
-  def karatsubaMultiply(a: UInt, b: UInt, n: UInt): UInt = {
-    val m = (n + 1.U) / 2.U
-    val (a0: UInt, a1: UInt) = (a >> m, a % (1.U << m).asUInt)
-    val (b0: UInt, b1: UInt) = (b >> m, b % (1.U << m).asUInt)
-    val z0 = a0 * b0
-    val z2 = a1 * b1
-    val z1: UInt = (a0 + a1) * (b0 + b1) - z0 - z2
-    val c: UInt = (z1.asUInt << m.asUInt).asUInt
-    (z0 << (2.U * m)).asUInt + c + z2
-  }
+  val karatsuba = Module(new KaratsubaMultiplication(p: RSAParams))
+  val modPow = Module(new ModularExponentiation(p: RSAParams))
 
-//  def generateRandomPrime(): UInt = {
-//    val bits = p.keySize / 2
-//    val prime = UInt(bits.W)
-//
-//    // Generate a random odd number with the specified number of bits
-//    println(s"bits = $bits\n")
-//    val randomNum = Random.nextInt((1 << bits) - 1)
-//    prime := randomNum.U
-//
-//    // Ensure the generated number is prime
-//    while (!isPrime(prime)) {
-//      prime := prime + 2.U // Increment by 2 to keep it odd
-//    }
-//
-//    prime
-//  }
 
-//  def isPrime(num: UInt): Boolean = {
-//    // Basic primality testing (you may want to use a more sophisticated method)
-//    val isPrime = Wire(Bool())
-//    isPrime := true.B
-//
-//    // Check divisibility by odd numbers up to the square root of num
-//    for (i <- 3 until math.sqrt(1 << p.keySize).toInt by 2) {
-//      when(num % i.U === 0.U) {
-//        isPrime := false.B
-//      }
-//    }
-//
-//    isPrime==true.B
-//  }
+  karatsuba.io.a := 1.U
+  karatsuba.io.b := 1.U
+
+  modPow.io.base := 1.U
+  modPow.io.exponent := 1.U
+  modPow.io.modulus := 1.U
+}
+
+class RSA(p: RSAParams) extends RSAIO(p) {
+
 
   def gcd(a: UInt, b: UInt): UInt = {
     if (b == 0.U) a else gcd(b, a % b)
@@ -89,37 +60,25 @@ class RSA(val p: RSAParams) extends Module {
     0.U
   }
 
-  def modPow(base: UInt, exponent: UInt, modulus: UInt): UInt = {
-    var result = 1.U
-    var baseExp = base
-    var exp = exponent
-
-    while ((exp > 0.U) == true.B) {
-      when ((exp & 1.U) === 1.U) {
-        result = (result * baseExp) % modulus
-      }
-
-      baseExp = (baseExp * baseExp) % modulus
-      exp = (exp >> 1).asUInt
-    }
-
-    result
-  }
 
   val n = Reg(UInt(p.keySize.W))
   val phiN = Reg(UInt(p.keySize.W))
   val e = Reg(UInt(p.keySize.W))
   val d = Reg(UInt(p.keySize.W))
-  val encryptedData = Reg(UInt(32.W))
-  val decryptedData = Reg(UInt(32.W))
+  val encryptedData = Reg(UInt(p.keySize.W))
+  val decryptedData = Reg(UInt(p.keySize.W))
 
   def generateKeys() = {
     val p1 = io.primeNum1
     val p2 = io.primeNum2
 
-    n := karatsubaMultiply(p1, p2, p.keySize.U)
+    karatsuba.io.a := p1
+    karatsuba.io.b := p2
+    n := karatsuba.io.result
 
-    phiN := karatsubaMultiply((p1-1.U), (p2-1.U), p.keySize.U)
+    karatsuba.io.a := p1-1.U
+    karatsuba.io.b := p2-1.U
+    phiN := karatsuba.io.result
 
     e := 2.U
 
@@ -140,12 +99,18 @@ class RSA(val p: RSAParams) extends Module {
 
   def encrypt() = {
     // Encryption
-    encryptedData := modPow(io.message, e, n)
+    modPow.io.base := io.message
+    modPow.io.exponent := e
+    modPow.io.modulus := n
+    encryptedData := modPow.io.result
   }
 
   def decrypt() = {
     // Decryption
-    decryptedData := modPow(encryptedData, d, n)
+    modPow.io.base := encryptedData
+    modPow.io.exponent := d
+    modPow.io.modulus := n
+    decryptedData := modPow.io.result
   }
 
   io.publicKeyN := n
