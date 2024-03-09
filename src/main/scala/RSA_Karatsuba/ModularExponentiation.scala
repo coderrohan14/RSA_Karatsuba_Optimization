@@ -1,28 +1,57 @@
 package RSA_Karatsuba
 
 import chisel3._
+import chisel3.util._
+
+class ModularExponentiationIO(p: RSAParams) extends Bundle {
+  val base = Input(UInt(p.keySize.W))
+  val exp = Input(UInt(p.keySize.W))
+  val modulus = Input(UInt(p.keySize.W))
+  val result = Output(UInt(p.keySize.W))
+  val start = Input(Bool())
+  val done = Output(Bool())
+}
 
 class ModularExponentiation(p: RSAParams) extends Module {
-  val io = IO(new Bundle {
-    val base = Input(UInt(p.keySize.W))
-    val exponent = Input(UInt(p.keySize.W))
-    val modulus = Input(UInt(p.keySize.W))
-    val result = Output(UInt(p.keySize.W))
-  })
+  val io = IO(new ModularExponentiationIO(p))
 
-    var result = RegInit(1.U)
-    var baseExp = RegInit(io.base)
-    var exp = RegInit(io.exponent)
+  val res = Reg(UInt(p.keySize.W))
+  val b = Reg(UInt(p.keySize.W))
+  val e = Reg(UInt(p.keySize.W))
+  val done = Reg(Bool())
 
-    while ((exp > 0.U) == true.B) {
-      when ((exp & 1.U) === 1.U) {
-        result := (result * baseExp) % io.modulus
+  val sIdle :: sCompute :: sFinished :: Nil = Enum(3)
+  val state = RegInit(sIdle)
+
+  switch(state) {
+    is(sIdle) {
+      when(io.start) {
+        res := 1.U
+        b := io.base % io.modulus
+        e := io.exp
+        state := sCompute
       }
-
-      baseExp := (baseExp * baseExp) % io.modulus
-      exp := (exp >> 1).asUInt
     }
+    is(sCompute) {
+      when(e > 0.U) {
+        when(e(0) === 1.U) {
+          res := (res * b) % io.modulus
+        }
+        b := (b * b) % io.modulus
+        e := e >> 1
+      }.otherwise {
+        done := true.B
+        state := sFinished
+      }
+    }
+    is(sFinished) {
+      when(!io.start) {
+        done := false.B
+        state := sIdle
+      }
+    }
+  }
 
-
-  io.result :=result
+  io.result := res
+  io.done := done
 }

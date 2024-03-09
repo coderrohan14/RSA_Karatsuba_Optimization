@@ -30,7 +30,7 @@ class RSAIO(p: RSAParams) extends Module{
   karatsuba.io.b := 1.U
 
   modPow.io.base := 1.U
-  modPow.io.exponent := 1.U
+  modPow.io.exp := 1.U
   modPow.io.modulus := 1.U
 }
 
@@ -100,7 +100,7 @@ class RSA(p: RSAParams) extends RSAIO(p) {
   def encrypt() = {
     // Encryption
     modPow.io.base := io.message
-    modPow.io.exponent := e
+    modPow.io.exp := e
     modPow.io.modulus := n
     encryptedData := modPow.io.result
   }
@@ -108,7 +108,7 @@ class RSA(p: RSAParams) extends RSAIO(p) {
   def decrypt() = {
     // Decryption
     modPow.io.base := encryptedData
-    modPow.io.exponent := d
+    modPow.io.exp := d
     modPow.io.modulus := n
     decryptedData := modPow.io.result
   }
