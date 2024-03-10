@@ -40,7 +40,7 @@ class ModularExponentiation(p: RSAParams) extends Module {
     }
     is(sCompute) {
       when(e > 0.U) {
-        when((e % 2.U) =/= 0.U) {
+        when(e(0) === 1.U) {
           // Start Karatsuba multiplication
           karatsuba_A := res
           karatsuba_B := b
@@ -59,13 +59,11 @@ class ModularExponentiation(p: RSAParams) extends Module {
     }
     is(sKaratsuba) {
       when(kar_done === 1.U) { // Wait for Karatsuba completion
-        println(s"Odd\n")
         res := karatsuba.io.result % io.modulus
         e := e - 1.U
       }.elsewhen(kar_done === 2.U){
-        println(s"Even\n")
         b := karatsuba.io.result % io.modulus
-        e := e >> 1
+        e := e / 2.U
       }
       kar_done := 0.U
       state := sCompute
