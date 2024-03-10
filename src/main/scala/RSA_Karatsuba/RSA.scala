@@ -24,6 +24,7 @@ class RSAIO(p: RSAParams) extends Module{
 
   val karatsuba = Module(new KaratsubaMultiplication(p: RSAParams))
   val modPow = Module(new ModularExponentiation(p: RSAParams))
+  val gcd = Module(new GCD(p: RSAParams))
 
 
   karatsuba.io.a := 1.U

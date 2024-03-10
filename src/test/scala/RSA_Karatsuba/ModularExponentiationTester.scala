@@ -22,6 +22,7 @@ class ModularExponentiationTester extends AnyFlatSpec with ChiselScalatestTester
       }
 
       dut.io.result.expect(8.U)
+
     }
   }
 

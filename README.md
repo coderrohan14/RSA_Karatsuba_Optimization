@@ -1,1 +1,25 @@
-This project contains the RSAModel.scala, RSAModelTester.scala, RSATester.scala, and RSA.scala files as of now. The RSAModel is working perfectly for bit size as large as 2048 bits with RSAModelTester passing all the test cases. We are in the process of builiding the Chisel Components for the same. We have a initial chisel module in the RSA.scala file which seems to be fine but has some errors due to which the test cases in the RSATester.scala were failing. For now, I have commented the part in the RSATester so that you can test the project using sbt test. We are planning to have separate chisel modules for Karatsuba Multiplication, Modular Exponentiation, and Modular Inverse functions, so that they can be integrated in the RSA module directly.
+RSA Karatsuba Project
+
+Overview:
+
+This project implements an RSA encryption and decryption module using Chisel, a hardware construction language for Scala. The implementation focuses on optimizing the RSA algorithm by incorporating the Karatsuba multiplication technique for large integer multiplication, which is crucial for RSA's performance with large key sizes.
+
+Features:
+
+RSA Implementation: Core RSA algorithm for encryption and decryption.
+Karatsuba Multiplication: An efficient algorithm for large integer multiplication, integrated into the RSA module to optimize performance.
+Modular Exponentiation: A critical component of RSA for performing the encryption and decryption operations.
+GCD Calculation: Utilized in the RSA algorithm for key generation, specifically for finding the modular inverse.
+
+Project Structure:
+
+src/main/scala/RSA_Karatsuba/: Contains the Scala and Chisel source files for the RSA implementation, including the Karatsuba multiplication (KaratsubaMultiplication.scala), modular exponentiation (ModularExponentiation.scala), and the main RSA module (RSA.scala).
+src/test/scala/RSA_Karatsuba/: Includes test suites for the RSA module (RSATester.scala), Karatsuba multiplication (KaratsubaTester.scala), and modular exponentiation (ModularExponentiationTester.scala).
+
+Getting Started:
+
+To run this project, you need to have SBT (Scala Build Tool) installed on your system. The project uses SBT for compiling and running the tests.
+
+1. Clone the Repository: Clone this repository to your local machine.
+2. Navigate to the Project Directory: Change into the project directory.
+3. Run the Tests: Execute the tests using SBT with the command sbt test.

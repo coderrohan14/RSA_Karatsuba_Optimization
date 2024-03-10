@@ -22,3 +22,4 @@ class KaratsubaMultiplication(p: RSAParams) extends Module {
 
   io.result := (z0 << (2.U * m)).asUInt + c + z2
 }
+

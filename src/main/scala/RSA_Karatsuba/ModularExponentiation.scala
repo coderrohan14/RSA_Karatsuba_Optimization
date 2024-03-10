@@ -19,9 +19,15 @@ class ModularExponentiation(p: RSAParams) extends Module {
   val b = Reg(UInt(p.keySize.W))
   val e = Reg(UInt(p.keySize.W))
   val done = Reg(Bool())
+  val kar_done = RegInit(0.U) // Flag to indicate Karatsuba completion
+  val karatsuba_A = RegInit(1.U(p.keySize.W))
+  val karatsuba_B = RegInit(1.U(p.keySize.W))
 
-  val sIdle :: sCompute :: sFinished :: Nil = Enum(3)
+  val sIdle :: sCompute :: sKaratsuba :: sFinished :: Nil = Enum(4)
   val state = RegInit(sIdle)
+
+  val karatsuba = Module(new KaratsubaMultiplication(p))
+
 
   switch(state) {
     is(sIdle) {
@@ -34,15 +40,35 @@ class ModularExponentiation(p: RSAParams) extends Module {
     }
     is(sCompute) {
       when(e > 0.U) {
-        when(e(0) === 1.U) {
-          res := (res * b) % io.modulus
+        when((e % 2.U) =/= 0.U) {
+          // Start Karatsuba multiplication
+          karatsuba_A := res
+          karatsuba_B := b
+          state := sKaratsuba
+          kar_done := 1.U
+        }.otherwise {
+          karatsuba_A := b
+          karatsuba_B := b
+          state := sKaratsuba
+          kar_done := 2.U
         }
-        b := (b * b) % io.modulus
-        e := e >> 1
       }.otherwise {
         done := true.B
         state := sFinished
       }
+    }
+    is(sKaratsuba) {
+      when(kar_done === 1.U) { // Wait for Karatsuba completion
+        println(s"Odd\n")
+        res := karatsuba.io.result % io.modulus
+        e := e - 1.U
+      }.elsewhen(kar_done === 2.U){
+        println(s"Even\n")
+        b := karatsuba.io.result % io.modulus
+        e := e >> 1
+      }
+      kar_done := 0.U
+      state := sCompute
     }
     is(sFinished) {
       when(!io.start) {
@@ -51,7 +77,8 @@ class ModularExponentiation(p: RSAParams) extends Module {
       }
     }
   }
-
+  karatsuba.io.a := karatsuba_A
+  karatsuba.io.b := karatsuba_B
   io.result := res
   io.done := done
 }

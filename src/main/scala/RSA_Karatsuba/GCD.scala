@@ -11,7 +11,7 @@ class GcdIO(p: RSAParams) extends Bundle {
   val done = Output(Bool())
 }
 
-class GcdCalculator(p: RSAParams) extends Module {
+class GCD(p: RSAParams) extends Module {
   val io = IO(new GcdIO(p))
 
   val a = Reg(UInt(p.keySize.W))
