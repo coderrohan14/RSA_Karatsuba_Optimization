@@ -15,8 +15,6 @@ class ModularExponentiationTester extends AnyFlatSpec with ChiselScalatestTester
       dut.io.modulus.poke(10.U)
       dut.io.start.poke(true.B)
 
-//      dut.clock.setTimeout(0)
-
       var done = false
       while (!done) {
         dut.clock.step(1)
@@ -36,6 +34,7 @@ class ModularExponentiationTester extends AnyFlatSpec with ChiselScalatestTester
       dut.io.modulus.poke(BigInt("149640102534676830219290743493803996312479106175015598787184555575246063310871253685714450770284193194997345492931276689510069161878913757305452969990858824739239445312245342452985345751321501623429774685942305600740958844296753244233723760842537868742326794717952528369817276946509791360959169618146431583151").U)
       dut.io.start.poke(true.B)
 
+      // set timeout to 0 (no timeout) for large bit sizes
       dut.clock.setTimeout(0)
 
       var done = false

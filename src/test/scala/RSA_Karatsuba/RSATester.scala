@@ -12,15 +12,30 @@ class RSATester extends AnyFlatSpec with ChiselScalatestTester {
   it should "generate prime keys" in {
     val p = RSAParams(keySize = 32)
     test(new RSA(p)) { rsa =>
-      // Provide input values (32-bit for simplicity)
-      rsa.io.primeNum1.poke(36607.U)
-      rsa.io.primeNum1.poke(42569.U)
-      rsa.io.message.poke(3546098009L.U)
-      rsa.clock.step()
-      rsa.generateKeys()
-      rsa.clock.step()
-      println(s"n: ${rsa.io.publicKeyN}, e: ${rsa.io.publicKeyE}, d: ${rsa.io.privateKeyD}\n")
-      true
+      rsa.rsaIO.primeNum1.poke(36607.U)
+      rsa.rsaIO.primeNum2.poke(42569.U)
+      rsa.rsaIO.message.poke(3546098009L.U)
+      rsa.rsaIO.start.poke(true.B)
+      rsa.rsaIO.done.expect(false.B)
+
+      // set timeout to 0 (no timeout) for large bit sizes
+      rsa.clock.setTimeout(0)
+
+      var done = false
+      while (!done) {
+        rsa.clock.step(1)
+        done = rsa.rsaIO.done.peek().litToBoolean
+      }
+
+//      println(s"Enc -> ${rsa.rsaIO.encrypted.peek}, Dec -> ${rsa.rsaIO.decrypted.peek}, n -> ${rsa.rsaIO.publicKeyN.peek}," +
+//        s"e -> ${rsa.rsaIO.publicKeyE.peek}, d -> ${rsa.rsaIO.privateKeyD.peek}, phiN -> ${rsa.phiNReg}\n")
+
+      rsa.rsaIO.done.expect(true.B)
+      rsa.rsaIO.publicKeyN.expect(1558323383L.U)
+      rsa.rsaIO.publicKeyE.expect(5.U)
+      rsa.rsaIO.privateKeyD.expect(934946525L.U)
+      rsa.rsaIO.encrypted.expect(144172259L.U)
+      rsa.rsaIO.decrypted.expect(3546098009L.U)
     }
   }
 
