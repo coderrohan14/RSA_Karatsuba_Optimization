@@ -4,8 +4,8 @@ import chisel3._
 
 class KaratsubaMultiplication(p: RSAParams) extends Module {
   val io = IO(new Bundle {
-    val a = Input(UInt((p.keySize/2).W))
-    val b = Input(UInt((p.keySize/2).W))
+    val a = Input(UInt(p.keySize.W))
+    val b = Input(UInt(p.keySize.W))
     val result = Output(UInt(p.keySize.W))
   })
 
