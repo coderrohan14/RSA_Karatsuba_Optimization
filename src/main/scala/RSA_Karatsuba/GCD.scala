@@ -11,6 +11,10 @@ class GcdIO(p: RSAParams) extends Bundle {
   val done = Output(Bool())
 }
 
+object GCDState extends ChiselEnum {
+  val sIdle, sCompute, sFinished = Value
+}
+
 class GCD(p: RSAParams) extends Module {
   val io = IO(new GcdIO(p))
 
@@ -19,31 +23,30 @@ class GCD(p: RSAParams) extends Module {
   val result = Reg(UInt(p.keySize.W))
   val done = Reg(Bool())
 
-  val sIdle :: sCompute :: sFinished :: Nil = Enum(3)
-  val state = RegInit(sIdle)
+  val state = RegInit(GCDState.sIdle)
 
   switch(state) {
-    is(sIdle) {
+    is(GCDState.sIdle) {
       when(io.start) {
         a := io.a
         b := io.b
-        state := sCompute
+        state := GCDState.sCompute
       }
     }
-    is(sCompute) {
+    is(GCDState.sCompute) {
       val temp = a % b
       a := b
       b := temp
       when(b === 0.U) {
         result := a
         done := true.B
-        state := sFinished
+        state := GCDState.sFinished
       }
     }
-    is(sFinished) {
+    is(GCDState.sFinished) {
       when(!io.start) {
         done := false.B
-        state := sIdle
+        state := GCDState.sIdle
       }
     }
   }

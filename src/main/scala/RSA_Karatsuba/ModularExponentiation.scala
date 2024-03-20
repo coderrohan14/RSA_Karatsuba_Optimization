@@ -12,6 +12,10 @@ class ModularExponentiationIO(p: RSAParams) extends Bundle {
   val done = Output(Bool())
 }
 
+object ModularExponentiationState extends ChiselEnum {
+  val sIdle, sCompute, sKaratsuba, sFinished = Value
+}
+
 class ModularExponentiation(p: RSAParams) extends Module {
   val io = IO(new ModularExponentiationIO(p))
 
@@ -23,41 +27,40 @@ class ModularExponentiation(p: RSAParams) extends Module {
   val karatsuba_A = RegInit(1.U(p.keySize.W))
   val karatsuba_B = RegInit(1.U(p.keySize.W))
 
-  val sIdle :: sCompute :: sKaratsuba :: sFinished :: Nil = Enum(4)
-  val state = RegInit(sIdle)
+  val state = RegInit(ModularExponentiationState.sIdle)
 
   val karatsuba = Module(new KaratsubaMultiplication(p))
 
 
   switch(state) {
-    is(sIdle) {
+    is(ModularExponentiationState.sIdle) {
       when(io.start) {
         res := 1.U
         b := io.base % io.modulus
         e := io.exp
-        state := sCompute
+        state := ModularExponentiationState.sCompute
       }
     }
-    is(sCompute) {
+    is(ModularExponentiationState.sCompute) {
       when(e > 0.U) {
         when(e(0) === 1.U) {
           // Start Karatsuba multiplication
           karatsuba_A := res
           karatsuba_B := b
-          state := sKaratsuba
+          state := ModularExponentiationState.sKaratsuba
           kar_done := 1.U
         }.otherwise {
           karatsuba_A := b
           karatsuba_B := b
-          state := sKaratsuba
+          state := ModularExponentiationState.sKaratsuba
           kar_done := 2.U
         }
       }.otherwise {
         done := true.B
-        state := sFinished
+        state := ModularExponentiationState.sFinished
       }
     }
-    is(sKaratsuba) {
+    is(ModularExponentiationState.sKaratsuba) {
       when(kar_done === 1.U) { // Wait for Karatsuba completion
         res := karatsuba.io.result % io.modulus
         e := e - 1.U
@@ -66,12 +69,12 @@ class ModularExponentiation(p: RSAParams) extends Module {
         e := e / 2.U
       }
       kar_done := 0.U
-      state := sCompute
+      state := ModularExponentiationState.sCompute
     }
-    is(sFinished) {
+    is(ModularExponentiationState.sFinished) {
       when(!io.start) {
         done := false.B
-        state := sIdle
+        state := ModularExponentiationState.sIdle
       }
     }
   }
