@@ -1,8 +1,8 @@
-# RSA Karatsuba Project
+# RSA Karatsuba Optimization Project
 
 ## Overview
 
-The RSA Karatsuba project implements the RSA encryption and decryption algorithm, optimized with Karatsuba multiplication for efficient handling of large integers. Developed in Chisel, a hardware design language based on Scala, it aims to create efficient, synthesizable hardware circuits.
+The RSA Karatsuba Optimization project implements the RSA encryption and decryption algorithm, optimized with Karatsuba multiplication for efficient handling of large integers. Developed in Chisel, a hardware design language based on Scala, it aims to create efficient, synthesizable hardware circuits.
 
 ## Key Components
 
