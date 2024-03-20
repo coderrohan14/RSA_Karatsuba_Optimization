@@ -53,4 +53,4 @@ Contributions welcome. Submit pull requests or open issues for changes or bug re
 
 ## Acknowledgments
 
-Aims to provide an efficient RSA algorithm hardware implementation, using Karatsuba multiplication for performance enhancement.
+The help and guidance of the instructor (Scott Beamer) for the course CSE 228A (Agile Hardware Design) and the detailed course material is gratefully acknowledged.
