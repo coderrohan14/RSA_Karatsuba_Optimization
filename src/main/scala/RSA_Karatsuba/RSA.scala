@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 
 
-case class RSAParams(keySize: Int)
+case class RSAParams(keySize: Int, karatsubaThreshold: UInt = 32.U)
 
 object RSAState extends ChiselEnum {
   val sIdle, sGenPublicKey, sGenPrivateKey, sEncrypt, sDecrypt, sModPow,  sGCD, sModInverse, sKaratsuba, sFinished = Value
