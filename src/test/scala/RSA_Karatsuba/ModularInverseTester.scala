@@ -44,7 +44,7 @@ class ModularInverseTester extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 
-  it should "handle invalid input (e.g., m=1)" in {
+  it should "handle edge case (m=1)" in {
     val p = RSAParams(keySize = 8)
     test(new ModularInverse(p)) { dut =>
       dut.io.a.poke(5.U)
