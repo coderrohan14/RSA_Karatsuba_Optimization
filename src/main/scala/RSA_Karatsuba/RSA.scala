@@ -37,6 +37,8 @@ class RSA(p: RSAParams) extends Module {
 
   val state = RegInit(RSAState.sIdle)
 
+  // Registers to hold the outputs
+
   val primeNum1Reg = Reg(UInt((p.keySize/2).W))
   val primeNum2Reg = Reg(UInt((p.keySize/2).W))
   val messageReg = Reg(UInt(p.keySize.W))
@@ -49,6 +51,7 @@ class RSA(p: RSAParams) extends Module {
   val doneReg = RegInit(false.B)
   val foundE = Reg(Bool())
 
+  // Registers to specify the source of the caller of module
   val karatsubaMode = Reg(UInt(4.W))
   val modPowMode = Reg(UInt(4.W))
 
@@ -104,6 +107,7 @@ class RSA(p: RSAParams) extends Module {
     }
 
     is(RSAState.sGenPrivateKey){
+      // d -> modInverse(e, phiN)
       modInverseA := pubKeyEReg
       modInverseM := phiNReg
       modInverseStart := true.B
@@ -111,6 +115,7 @@ class RSA(p: RSAParams) extends Module {
     }
 
     is(RSAState.sEncrypt){
+      // Cipher value -> (M^e) % n
       modPowBase := messageReg
       modPowExp := pubKeyEReg
       modPowModulus := pubKeyNReg
@@ -120,6 +125,7 @@ class RSA(p: RSAParams) extends Module {
     }
 
     is(RSAState.sDecrypt){
+      // Decrypted value -> (C^d) % n
       modPowBase := encryptedReg
       modPowExp := privKeyDReg
       modPowModulus := pubKeyNReg
@@ -131,12 +137,14 @@ class RSA(p: RSAParams) extends Module {
     is(RSAState.sKaratsuba){
       switch(karatsubaMode){
         is(1.U){
+          // for calculating the value of N -> P * Q
           pubKeyNReg := rsaIO.karatsuba.io.result
           karatsubaA := primeNum1Reg - 1.U
           karatsubaB := primeNum2Reg - 1.U
           karatsubaMode := 2.U
         }
         is(2.U){
+          // for calculating the value of phiN -> (P-1) * (Q-1)
           phiNReg := rsaIO.karatsuba.io.result
           pubKeyEReg := 2.U
           foundE := false.B
@@ -169,11 +177,13 @@ class RSA(p: RSAParams) extends Module {
       when(rsaIO.modPow.io.done){
         switch(modPowMode){
           is(1.U){
+            // called from encryption state
             encryptedReg := rsaIO.modPow.io.result
             modPowStart := false.B
             state := RSAState.sDecrypt
           }
           is(2.U){
+            // called from decryption state
             decryptedReg := rsaIO.modPow.io.result
             modPowStart := false.B
             state := RSAState.sFinished
@@ -189,7 +199,7 @@ class RSA(p: RSAParams) extends Module {
   }
 
 
-
+  // Setting the IO ports back to the register values...
 
   rsaIO.karatsuba.io.a := karatsubaA
   rsaIO.karatsuba.io.b := karatsubaB
